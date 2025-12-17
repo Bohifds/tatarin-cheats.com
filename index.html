@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TATARIN CHEATS</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+html, body { width:100%; height:100%; font-family:Arial,sans-serif; color:#fff; background:linear-gradient(180deg,#000000 0%,#00008B 100%); overflow:hidden; }
+
+/* Canvas частиц */
+#particleCanvas { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; }
+
+/* Навигация */
+.tabs-nav { position:fixed; top:0; left:0; right:0; display:flex; justify-content:center; gap:40px; background:rgba(0,0,0,0.6); padding:12px 0; border-bottom:2px solid #ff00ff; z-index:10; }
+.tab-link { color:#ff88ff; text-decoration:none; font-size:18px; padding:8px 20px; border-radius:8px; transition:0.3s; }
+.tab-link.active { background:rgba(255,0,255,0.2); color:#ff00ff; }
+
+/* Вкладки */
+.tab { display:none; text-align:center; width:100%; padding-top:120px; padding-bottom:40px; opacity:0; transition:opacity 0.5s ease; z-index:1; }
+.tab.active { display:block; opacity:1; }
+
+/* Главная */
+.skull { font-size:150px; margin-bottom:10px; }
+h1 { font-size:48px; margin:0 0 20px; color:#ff88ff; }
+.subtitle { color:#d7b8ff; font-size:16px; }
+
+/* Таймер */
+#key-timer { margin-top:10px; display:none; font-weight:bold; }
+#timer-bar { width:100%; max-width:300px; height:12px; background:rgba(255,255,255,0.2); border-radius:6px; margin:8px auto 0; display:none; overflow:hidden; }
+#timer-progress { width:100%; height:100%; background:linear-gradient(90deg,#ff00ff,#ff88ff); transition:width 1s linear; }
+
+/* Меню */
+.menu-icons { display:flex; justify-content:center; gap:40px; margin-top:40px; flex-wrap:wrap; }
+.menu-icon { width:120px; height:120px; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(255,255,255,0.1); border-radius:20px; color:#ff88ff; transition:0.3s; }
+.menu-icon:hover { transform:scale(1.1); background:rgba(255,255,255,0.2); }
+.menu-icon i { font-size:36px; margin-bottom:8px; }
+.menu-icon span { font-size:14px; }
+
+/* Кнопки */
+button { padding:14px 36px; font-size:16px; font-weight:bold; color:#fff; border:none; border-radius:12px; cursor:pointer; transition:0.3s; background:linear-gradient(135deg,#ff00ff,#8800ff); box-shadow:0 4px 15px rgba(255,0,255,0.4); }
+button:hover { transform:scale(1.05); box-shadow:0 6px 20px rgba(255,0,255,0.6); }
+#downloadBtn { background:linear-gradient(135deg,#ff0080,#ff00ff); }
+#logoutBtn { background:linear-gradient(135deg,#ff4444,#ff88aa); display:none; margin-top:15px; }
+#changeBgBtn { margin-top:15px; background:linear-gradient(135deg,#44ff44,#00ff88); }
+
+/* Иконка скачивания */
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+.spin { animation: spin 1s linear infinite; }
+#downloadIconContainer { transition: transform 0.3s; margin-top:12px; font-size:24px; color:#ff88ff; }
+
+/* Авторизация */
+#auth { position:fixed; inset:0; z-index:1000; background:radial-gradient(circle at top,#2a004a,#0a0015); display:flex; align-items:center; justify-content:center; }
+.auth-card { width:340px; padding:36px 32px; text-align:center; background:rgba(15,0,30,.9); border-radius:22px; }
+.auth-icon { font-size:64px; color:#ff88ff; margin-bottom:10px; }
+.auth-title { margin:6px 0 4px; }
+.auth-sub { margin:0 0 18px; font-size:14px; color:#bfa6ff; }
+.input-box { display:flex; align-items:center; gap:8px; background:#12001f; border-radius:14px; padding:12px 10px; margin-bottom:18px; position:relative; justify-content:center; }
+.input-box i { color:#bfa6ff; }
+.input-box input { flex:1; background:none; border:none; outline:none; color:#fff; font-size:15px; }
+.input-box input::placeholder { color:#7b6aa8; }
+#showKeyBtn { background:none; border:none; color:#bfa6ff; cursor:pointer; font-size:18px; margin-left:-10px; }
+
+.auth-btn { width:100%; padding:14px; font-size:18px; color:#fff; background:#ff00ff; border:none; border-radius:14px; cursor:pointer; }
+.auth-error { margin-top:10px; font-size:13px; color:#ff9aa9; display:none; }
+
+/* Модалка ключа истек */
+#keyExpiredModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); display:flex; justify-content:center; align-items:center; z-index:2000; }
+#keyExpiredModal div { background:#220022; padding:30px 40px; border-radius:20px; text-align:center; color:#ff88ff; font-size:20px; box-shadow:0 0 20px rgba(255,0,255,0.5); }
+#keyExpiredModal button { margin-top:15px; padding:10px 24px; font-size:16px; border:none; border-radius:12px; background:linear-gradient(135deg,#ff00ff,#8800ff); color:#fff; cursor:pointer; }
+
+/* Адаптив */
+@media(max-width:520px){ h1{font-size:36px;} .skull{font-size:120px;} }
+</style>
+</head>
+<body>
+
+<canvas id="particleCanvas"></canvas>
+
+<!-- Навигация -->
+<div class="tabs-nav">
+  <a href="#" class="tab-link active" data-tab="home">Главная</a>
+  <a href="#" class="tab-link" data-tab="menu">Меню</a>
+  <a href="#" class="tab-link" data-tab="download">Скачать</a>
+</div>
+
+<!-- Главная -->
+<section id="home" class="tab active">
+  <i class="fa-solid fa-skull skull"></i>
+  <h1>TATARIN CHEATS</h1>
+  <div class="subtitle">Закрытый доступ по ключу</div>
+  <div id="key-timer">Время действия ключа: 01:00</div>
+  <div id="timer-bar"><div id="timer-progress"></div></div>
+  <button id="logoutBtn">Выйти</button>
+  <button id="changeBgBtn">Изменить фон</button>
+</section>
+
+<!-- Меню -->
+<section id="menu" class="tab">
+  <h1>Меню</h1>
+  <div class="menu-icons">
+    <div class="menu-icon">
+      <i class="fa-solid fa-magic"></i>
+      <span>Чит</span>
+    </div>
+    <div class="menu-icon">
+      <i class="fa-solid fa-shield-halved"></i>
+      <span>Защита</span>
+    </div>
+    <div class="menu-icon">
+      <i class="fa-solid fa-sliders"></i>
+      <span>Настройки</span>
+    </div>
+  </div>
+</section>
+
+<!-- Скачать -->
+<section id="download" class="tab">
+  <h1>Скачать</h1>
+  <button id="downloadBtn">Скачать</button>
+  <div id="downloadIconContainer"><i class="fa-solid fa-download" id="downloadIcon"></i></div>
+  <div class="download-note">Доступно только после авторизации</div>
+</section>
+
+<!-- Авторизация -->
+<div id="auth">
+  <div class="auth-card">
+    <i class="fa-solid fa-user auth-icon"></i>
+    <h2 class="auth-title">Вход</h2>
+    <p class="auth-sub">Введите ключ доступа</p>
+    <div class="input-box">
+      <i class="fa-solid fa-key"></i>
+      <input id="authKey" type="password" placeholder="Ключ" />
+      <button id="showKeyBtn" title="Показать ключ"><i class="fa-solid fa-eye"></i></button>
+    </div>
+    <button class="auth-btn" id="loginBtn">Войти</button>
+    <div class="auth-error" id="authError">Неверный ключ</div>
+  </div>
+</div>
+
+<!-- Модалка истекшего ключа -->
+<div id="keyExpiredModal">
+  <div>
+    <h2>Срок действия ключа истёк!</h2>
+    <p>Для повторного доступа нужно использовать новый ключ.</p>
+    <button id="closeExpiredModal">Закрыть</button>
+  </div>
+</div>
+
+<script>
+/* ===== Одноразовые ключи с HWID ===== */
+const allKeys = [
+  'TATARIN01','TATARIN02','TATARIN03','TATARIN04','TATARIN05',
+  'TATARIN06','TATARIN07','TATARIN08','TATARIN09','TATARIN10',
+  'TATARIN11','TATARIN12','TATARIN13','TATARIN14','TATARIN15',
+  'TATARIN16','TATARIN17','TATARIN18','TATARIN19','TATARIN20',
+  'TATARIN21','TATARIN22','TATARIN23','TATARIN24','TATARIN25'
+];
+let usedKeys = JSON.parse(localStorage.getItem('usedKeys')||'{}');
+let hwid = localStorage.getItem('hwid');
+if(!hwid){ hwid='HWID-'+Math.random().toString(36).substring(2,12); localStorage.setItem('hwid',hwid); }
+
+/* ===== Вкладки ===== */
+const tabs=document.querySelectorAll('.tab');
+const tabLinks=document.querySelectorAll('.tab-link');
+tabLinks.forEach(link=>link.addEventListener('click',e=>{
+  e.preventDefault();
+  const target=link.dataset.tab;
+  tabLinks.forEach(l=>l.classList.remove('active'));
+  link.classList.add('active');
+  tabs.forEach(t=>{
+    if(t.id===target){t.style.display='block';setTimeout(()=>t.style.opacity=1,10);}
+    else{t.style.opacity=0;setTimeout(()=>t.style.display='none',500);}
+  });
+}));
+
+/* ===== Авторизация ===== */
+const auth=document.getElementById('auth');
+const authKey=document.getElementById('authKey');
+const loginBtn=document.getElementById('loginBtn');
+const authError=document.getElementById('authError');
+const showKeyBtn=document.getElementById('showKeyBtn');
+const logoutBtn=document.getElementById('logoutBtn');
+const timerEl=document.getElementById('key-timer');
+const timerBar=document.getElementById('timer-bar');
+const timerProgress=document.getElementById('timer-progress');
+let timerDuration=60;
+let timerInterval;
+
+showKeyBtn.addEventListener('click',()=>{ authKey.type=authKey.type==='password'?'text':'password'; });
+
+function showLogout(){ logoutBtn.style.display='inline-block'; }
+logoutBtn.addEventListener('click',()=>{
+  clearInterval(timerInterval);
+  auth.style.display='flex';
+  timerEl.style.display='none';
+  timerBar.style.display='none';
+  logoutBtn.style.display='none';
+});
+
+function startKeyTimer(duration){
+  let time=duration;
+  timerEl.style.display='block';
+  timerBar.style.display='block';
+  timerProgress.style.width='100%';
+  timerInterval=setInterval(()=>{
+    let minutes=Math.floor(time/60);
+    let seconds=time%60;
+    timerEl.textContent=`Время действия ключа: ${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`;
+    timerProgress.style.width=(time/duration*100)+'%';
+    if(time<=0){
+      clearInterval(timerInterval);
+      document.getElementById('keyExpiredModal').style.display='flex';
+      auth.style.display='flex';
+      timerEl.style.display='none';
+      timerBar.style.display='none';
+      logoutBtn.style.display='none';
+    }
+    time--;
+  },1000);
+}
+
+document.getElementById('closeExpiredModal').addEventListener('click',()=>{
+  document.getElementById('keyExpiredModal').style.display='none';
+});
+
+loginBtn.addEventListener('click',()=>{
+  const key=authKey.value.trim();
+  if(allKeys.includes(key)){
+    if(usedKeys[key]){ authError.textContent='Ключ уже использован'; authError.style.display='block'; return; }
+    usedKeys[key]=hwid;
+    localStorage.setItem('usedKeys',JSON.stringify(usedKeys));
+    auth.style.display='none';
+    startKeyTimer(timerDuration);
+    showLogout();
+  } else { authError.textContent='Неверный ключ'; authError.style.display='block'; }
+});
+
+if(localStorage.getItem('auth_ok')==='1'){ auth.style.display='none'; startKeyTimer(timerDuration); showLogout(); }
+
+/* ===== Скачать ZIP ===== */
+document.getElementById('downloadBtn').addEventListener('click', async()=>{
+  if(!usedKeys[authKey.value.trim()]){ alert('Доступ к загрузке закрыт. Войдите в систему.'); return; }
+  const icon=document.getElementById('downloadIcon');
+  icon.classList.add('spin');
+  const zip=new JSZip();
+  const folder=zip.folder('TATARIN_CHEATS');
+  folder.file('readme.txt','Добро пожаловать! Это ваш набор файлов.');
+  folder.file('config.txt','Настройки по умолчанию.');
+  const content=await zip.generateAsync({type:'blob'});
+  icon.classList.remove('spin');
+  saveAs(content,'TATARIN_CHEATS.zip');
+});
+
+/* ===== Изменение фона ===== */
+document.getElementById('changeBgBtn').addEventListener('click',()=>{
+  const color1='#'+Math.floor(Math.random()*16777215).toString(16).padStart(6,'0');
+  const color2='#'+Math.floor(Math.random()*16777215).toString(16).padStart(6,'0');
+  document.body.style.background=`linear-gradient(180deg, ${color1} 0%, ${color2} 100%)`;
+});
+
+/* ===== Частицы падающие ===== */
+const canvas=document.getElementById('particleCanvas');
+const ctx=canvas.getContext('2d');
+canvas.width=window.innerWidth;
+canvas.height=window.innerHeight;
+window.addEventListener('resize',()=>{ canvas.width=window.innerWidth; canvas.height=window.innerHeight; });
+const particles=[]; const particleCount=400;
+for(let i=0;i<particleCount;i++){ particles.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,radius:Math.random()*2+1,speedY:Math.random()*1+0.5,color:'rgba(100,100,255,0.7)'}); }
+function animateParticles(){ ctx.clearRect(0,0,canvas.width,canvas.height); particles.forEach(p=>{ p.y+=p.speedY; if(p.y>canvas.height){p.y=0; p.x=Math.random()*canvas.width;} ctx.beginPath(); ctx.arc(p.x,p.y,p.radius,0,Math.PI*2); ctx.fillStyle=p.color; ctx.fill(); }); requestAnimationFrame(animateParticles); }
+animateParticles();
+</script>
+</body>
+</html>
